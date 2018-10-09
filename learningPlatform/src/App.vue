@@ -44,4 +44,21 @@
   height: 70px;
   line-height: 70px;
 }
+.el-pager li{
+  font-size:18px;
+}
+.el-pagination span.el-pagination__total {
+    font-size: 18px !important;
+}
+
+.el-input--suffix .el-input__inner{
+    font-size: 16px;
+}
+.el-checkbox__label{
+    font-size: 16px;
+    font-weight: bold;
+}
+.CodeMirror{
+    height: 370px !important;
+}
 </style>

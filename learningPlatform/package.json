@@ -10,9 +10,13 @@
     "build": "node build/build.js"
   },
   "dependencies": {
+    "art-template": "^4.13.1",
+    "art-template-loader": "^1.4.3",
     "axios": "^0.18.0",
     "element-ui": "^2.4.7",
+    "qs": "^6.5.2",
     "vue": "^2.5.2",
+    "vue-codemirror": "^4.0.5",
     "vue-router": "^3.0.1"
   },
   "devDependencies": {

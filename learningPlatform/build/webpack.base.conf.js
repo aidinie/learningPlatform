@@ -64,7 +64,16 @@ module.exports = {
           limit: 10000,
           name: utils.assetsPath('fonts/[name].[hash:7].[ext]')
         }
+      },
+      {
+        test: /\.art$/,
+        loader: "art-template-loader",
+        options: {
+            // art-template options (if necessary)
+            // @see https://github.com/aui/art-template
+        }
       }
+
     ]
   },
   node: {

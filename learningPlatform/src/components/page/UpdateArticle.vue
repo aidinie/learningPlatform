@@ -4,15 +4,15 @@
             <h2>写文章</h2>
         </div>
         <el-row>
-            <el-col :span="2" class="title" :offset="2">标题:</el-col>
-            <el-col :span="4">
+            <el-col :span="2" class="title" :offset="1">标题:</el-col>
+            <el-col :span="6">
                 <el-input
                     placeholder="请输入标题"
                     clearable
                     v-model="title">
                 </el-input>
             </el-col>
-            <el-col :span="2" class="title">权限:</el-col>
+            <el-col :span="2" class="title" :offset="1">权限:</el-col>
             <el-col :span="4">
                     <el-dropdown @command="handleCommand">
                         <el-button type="success">
@@ -24,10 +24,10 @@
                         </el-dropdown-menu>
                     </el-dropdown>
             </el-col>
-            <el-col :span="3" :offset="1"><el-button type="success" round @click="save">提交</el-button></el-col>
+            <el-col :span="3" :offset="2"><el-button type="success" round @click="save">提交</el-button></el-col>
         </el-row>
         <el-row>
-            <el-col :span="2" class="title" :offset="2">标签:</el-col>
+            <el-col :span="2" class="title" :offset="1">标签:</el-col>
             <el-tag
             :key="tag"
             v-for="tag in dynamicTags"
@@ -48,11 +48,7 @@
             </el-input>
             <el-button v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>     
         </el-row>
-        <!-- <el-row>
-            <el-col :offset="2" :span="15"> -->
-                <div id="editor" type="text/plain"></div> 
-            <!-- </el-col>
-        </el-row> -->
+        <div id="editor" type="text/plain"></div> 
         
     </div>
 </template>
@@ -60,20 +56,19 @@
     import '../../../static/utf8-jsp/ueditor.config' 
     import '../../../static/utf8-jsp/ueditor.all'; 
     import '../../../static/utf8-jsp/lang/zh-cn/zh-cn'; 
-    import axios from 'axios'
 export default{
     data(){
         return{
-            authority:1,
+            authority:1,    //权限 1：公开 2：仅自己可见
             authorityName:'公开',
-            dynamicTags: ['标签一', '标签二', '标签三'],
+            dynamicTags: [],//标签
             inputVisible: false,
-            inputValue: '',
-            editor: '', 
-            editordata: '', 
-            xierudata:  '<p><strong>UE加载完成后写入数据</strong></p><p><strong>nnn</strong></p><p>mppm</p>',
-            title:'',
-            acticleData:''
+            inputValue: '',  //新建标签
+            editor: '', //存储实例化的编辑器
+            editordata: '', //要写入编辑器的内容
+            title:'',   //标题
+            acticleData:'',
+            id:'',
         };
     },
     created(){
@@ -81,20 +76,18 @@ export default{
         var query = this.$route.query;
         console.log(query);
         if(query.id){
-            this.getArticleData();
+            this.id = query.id;
+            this.getArticleData(query.id);
         }
     },
     mounted(){
         let _this = this;
-        console.log(111);
         _this.editor = UE.getEditor('editor',{ 
         BaseUrl: '', 
-        UEDITOR_HOME_URL: 'static/utf8-jsp/', 
-        // toolbars:[] 
+        UEDITOR_HOME_URL: 'static/utf8-jsp/',
         });
         _this.editor.addListener("ready", function () {
-            // _this.ue.setContent(_this.xierudata); // 确保UE加载完成后，放入内容。
-            console.log(222);
+            _this.editor.setContent(_this.editordata); // 确保UE加载完成后，放入内容。
         });
     },
     destroyed() {
@@ -125,26 +118,91 @@ export default{
         this.inputVisible = false;
         this.inputValue = '';
       },
-
       save() {
-          console.log(this.editor.getContent());
-          console.log(this.dynamicTags);
-          console.log(this.title);
-          console.log(this.authority);
-
+        var tag = this.dynamicTags.join(",");
+        var date = new Date();
+        var Y = date.getFullYear() + '-';
+        var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+        var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate()) + ' ';
+        var h = (date.getHours()<10 ? '0'+date.getHours() : date.getHours()) + ':';
+        var m = (date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes());
+        var createDate = Y+M+D+h+m;
+        console.log(createDate);
+        var params = {
+            user:'nie',
+            title: this.title,
+            content: this.editor.getContent(),
+            tag: tag,
+            authority: this.authority,
+            createDate: createDate
+        }
+        console.log(params);
+        if(this.id){
+            params.id = this.id;
+            params.lastModifyUser = "li";
+            var _this = this;
+            this.$axios({
+                url:"http://localhost:3000/updateArticle",
+                method: 'POST',
+                data:this.$qs.stringify(params),
+            }).then(function(data){
+                if(data.data.code == 200){
+                    _this.$message({
+                        message: '恭喜你，更新文章成功!',
+                        type: 'success'
+                    });
+                    setTimeout(function(){
+                        _this.$router.push({
+                            path: '/detail',
+                            query: {
+                                id: _this.id
+                            }
+                        })
+                    },2000);
+                }else{
+                    _this.$message.error(data.data.data.msg);
+                }
+            });
+        }else{
+            var _this = this;
+            this.$axios({
+                url:"http://localhost:3000/setArticle",
+                method: 'POST',
+                data:this.$qs.stringify(params),
+            }).then(function(data){
+                if(data.data.code == 200){
+                    _this.$message({
+                        message: '恭喜你，保存文章成功!',
+                        type: 'success'
+                    });
+                    setTimeout(function(){
+                        _this.$router.push({
+                            path: '/detail',
+                            query: {
+                                id: data.data.data.id
+                            }
+                        })
+                    },2000);
+                }else{
+                    _this.$message.error(data.data.data.msg);
+                }
+            });
+        }
       },
-
-      getArticleData(){
+      getArticleData(id){
         var _this = this;
-        this.$axios.get('/api/oprArticle?oprType=getArticle&id=646&callback=cb').then(function(data){
-            console.log(data);
-            // _this.xierudata = data.data.content;
-            // _this.dynamicTags = data.data.tag.split(",");
-            // _this.authority = data.data.authority;
-            // _this.title = data.data.title;
-            console.log(_this.title);
+        this.$axios.get('http://localhost:3000/oprArticle?id='+id).then(function(data){
+            if(data.data.code == 200){
+                data = data.data.data[0]
+                _this.title = data.title;
+                _this.editordata = data.content;
+                _this.authority = data.authority;
+                _this.dynamicTags = data.tag.split(",");
+            }else{
+                _this.$message.error(data.data.data.msg);
+            }
         })
-      }
+      },
 
     }
 }
@@ -191,6 +249,11 @@ export default{
     margin-top: 20px;
 }
 #contain{
-    width: 1200px; 
+    width: 1280px; 
+}
+.el-tag{
+    height: 36px;
+    line-height: 36px;
+    font-size: 16px;
 }
 </style>

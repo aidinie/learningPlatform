@@ -1,0 +1,153 @@
+<!--
+最简单的CodeMirror编辑器
+-->
+
+<!DOCTYPE>
+
+<html>
+
+<!--下面两个是使用Code Mirror必须引入的-->
+<link rel="stylesheet" href="./lib/codemirror.css">
+<script src="./lib/codemirror.js"></script>
+
+<script src="./lib/jquery.js"></script>
+<!-- mode -->
+<script src="./mode/javascript/javascript.js"></script>
+<script src="./mode/htmlmixed/htmlmixed.js"></script>
+<!-- 括号匹配 -->
+<script src="./addon/edit/matchbrackets.js"></script>
+<!-- 当前行 -->
+<script src="./addon/selection/active-line.js"></script>
+
+<!--支持代码折叠-->
+<link rel="stylesheet" href="./addon/fold/foldgutter.css"/>
+<script src="./addon/fold/foldcode.js"></script>
+<script src="./addon/fold/foldgutter.js"></script>
+<script src="./addon/fold/brace-fold.js"></script>
+<script src="./addon/fold/comment-fold.js"></script>
+
+<!--全屏模式-->
+<link rel="stylesheet" href="./addon/display/fullscreen.css">
+<script src="./addon/display/fullscreen.js"></script>
+
+<!--括号匹配-->
+<script src="./addon/edit/matchbrackets.js"></script>
+
+<!--自动补全-->
+<link rel="stylesheet" href="./addon/hint/show-hint.css">
+<script src="./addon/hint/show-hint.js"></script>
+<script src="./addon/hint/anyword-hint.js"></script>
+<head>
+<title>CodeMirrorTest</title>
+<style>
+    .CodeMirror {
+        height: 200px;
+        width: 300px;
+    }
+    #codeHtml,#codeCss,#iframe{
+        position: absolute;
+        top: 10px;
+    }
+    #codeHtml{
+        left: 10px;
+    }
+    #codeCss{
+        left: 400px;
+    }
+    #iframe{
+        left: 800px;
+    }
+    .operation{
+        position: absolute;
+        left: 20px;
+        top: 260px;
+    }
+</style>
+</head>
+<body>
+<!-- <textarea id="code"></textarea> -->
+<div id="codeHtml" style="height: 200px;width: 500px;"></div>
+<div id="codeCss" style="height: 200px;width: 500px;"></div>
+<div id="iframe">
+    <!-- <iframe id="result" name="result" sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin" src="./sub.html">
+    </iframe> -->
+</div>
+<div class="operation">
+    <button id="getCodeVal">获取val</button>
+    <button id="setCodeVal">设置val</button>
+    <button id="run">运行</button>
+</div>
+</body>
+<script type="text/javascript">
+//根据DOM元素的id构造出一个编辑器
+    // var editor=CodeMirror.fromTextArea(document.getElementById("code"),{
+    //      //Java高亮显示
+    //      mode:"javascript",
+
+    //      //显示行号
+    //      lineNumbers:true,
+
+    //      //代码折叠
+    //      lineWrapping:true,
+    //      foldGutter: true,
+    //      gutters:["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+
+    //      //全屏模式
+    //      fullScreen:true,
+    //      styleActiveLine: true,
+    //       //括号匹配
+    //       matchBrackets:true,
+
+    //       //智能提示 
+    //       extraKeys:{"Ctrl-Space":"autocomplete"}//ctrl-space唤起智能提示
+    //     });
+    var htmlval = '';
+    var cssval = '';
+    var myCodeMirrorHhtml = CodeMirror(function(elt) {
+            // $("#code")[0].parentNode.replaceChild(elt, $("#code")[0]);
+            $("#codeHtml").append(elt);
+            console.log(elt);
+        }, { "lineNumbers": true, mode: "html" });
+    var myCodeMirrorCss = CodeMirror(function(elt) {
+            // $("#codeRunCss")[0].parentNode.replaceChild(elt, $("#codeRunCss")[0]);
+            $("#codeCss").append(elt);
+        }, { "lineNumbers": true, mode: "css" });
+    $("#getCodeVal").on('click',function(){
+        htmlval = myCodeMirrorHhtml.getValue();
+        cssval = myCodeMirrorCss.getValue();
+        console.log(typeof htmlval);
+        console.log(cssval);
+    })
+    $('#setCodeVal').on('click',function(){
+        myCodeMirrorHhtml.setValue(val)
+    })
+    $('#run').on('click',function(){
+        htmlval = myCodeMirrorHhtml.getValue();
+        cssval = myCodeMirrorCss.getValue();
+        updateIframe();
+        // var dom = '<html>' +'<head>' + '<style>' + cssval + '</style></head>' + '<body>' + htmlval + '</body></html>';
+        // console.log(dom);
+        // console.log( $("#result")[0].contentWindow.document);
+        // var iframe = document.getElementById('result');
+        // iframe.contentWindow.document.open();
+        // iframe.contentWindow.document.write(dom);
+        // iframe.contentWindow.document.close();
+        // // $("#result")[0].contentWindow.document.write(dom);
+        // $("#result")[0].append(dom);
+        // var elem = document.getElementById('result').contentWindow.document;
+        // console.log(elem);
+    })
+    var updateIframe = function() {
+        var html = myCodeMirrorHhtml.getValue();
+        var css = myCodeMirrorCss.getValue();
+        $("#result").remove();
+        $("#iframe").append('<iframe id="result" class="" sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin" style="height: 300px"></iframe>');
+        var dom = '<html>' +'<head>' + '<style>' + cssval + '</style></head>' + '<body>' + htmlval + '</body></html>';
+        var result = $("#result")[0];
+        console.log(dom);
+        result.contentWindow.document.open('text/html', 'replace');
+        result.contentWindow.document.write(dom);
+        result.contentWindow.document.close();
+    };
+</script>
+</html>

@@ -6,7 +6,13 @@ import router from './router'
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
 import axios from 'axios';
+import qs from 'qs';
+// import Template from 'art-template/index.js'
+import { Message } from 'element-ui';
 Vue.prototype.$axios=axios;
+Vue.prototype.$qs=qs;
+// Vue.prototype.$template=Template;
+Vue.prototype.$message=Message;
 Vue.use(ElementUI);
 
 Vue.config.productionTip = false

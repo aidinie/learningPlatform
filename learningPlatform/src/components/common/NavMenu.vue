@@ -1,12 +1,12 @@
 <template>
 <div>
     <el-row>
-        <el-col :span="3" :offset="2">
+        <el-col :span="3" :offset="4">
             <router-link to="/index">
                 <img src="../../assets/logo.png" alt="" height="50px" width="105px" style="margin-top:10px">
             </router-link>
         </el-col>
-        <el-col :span="14" :offset="1">
+        <el-col :span="8" :offset="1">
                 <el-menu 
                     :default-active="activeIndex" 
                     class="el-menu-demo" 
