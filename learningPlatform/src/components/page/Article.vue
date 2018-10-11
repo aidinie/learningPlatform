@@ -110,7 +110,7 @@ export default{
                     _this.articleData = data.data.data;
                     _this.total = data.data.count;
                 }else{
-                    _this.$message.error(data.data.data.msg);
+                    _this.$message.error(data.data.msg);
                 }
             })
         },
@@ -137,7 +137,7 @@ export default{
                     _this.currentPage = 1;
                     _this.getAllArticle();
                 }else{
-                    _this.$message.error(data.data.data.msg);
+                    _this.$message.error(data.data.msg);
                 }
             })
         },

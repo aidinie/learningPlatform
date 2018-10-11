@@ -6,6 +6,7 @@ import UpdateArticle from '@/components/page/UpdateArticle'
 import Article from '@/components/page/Article'
 import Detail from '@/components/page/Detail'
 import RunCode from '@/components/page/RunCode'
+import RunCodeList from '@/components/page/RunCodeList'
 
 Vue.use(Router)
 
@@ -40,6 +41,11 @@ export default new Router({
       path: '/runCode',
       name: 'RunCode',
       component: RunCode
+    },
+    {
+      path: '/runCodeList',
+      name: 'RunCodeList',
+      component: RunCodeList
     },
     
     

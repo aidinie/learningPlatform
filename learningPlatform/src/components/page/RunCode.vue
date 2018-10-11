@@ -10,19 +10,20 @@
             <el-col :span="10">
                 <el-input
                     placeholder="请输入标题"
+                    v-model="name"
                     clearable
                     >
                 </el-input>
             </el-col>
             <el-col :span="3" :offset="2"><el-button type="success" @click="run" round >运行</el-button></el-col>
-            <el-col :span="3" :offset="2"><el-button type="success" round >保存</el-button></el-col>
+            <el-col :span="3" :offset="2"><el-button type="success" round @click="save" >保存</el-button></el-col>
         </el-row>
         <el-row>
             <el-col :span="4">
                 <div class="title">请选择需要的库:</div>
             </el-col>
             <el-col :span="20">
-                <el-checkbox-group v-model="checkList" @change="change">
+                <el-checkbox-group v-model="checkList" @change="changeMethod">
                     <el-checkbox label="jquery"></el-checkbox>
                     <el-checkbox label="underscore"></el-checkbox>
                     <el-checkbox label="backbone"></el-checkbox>
@@ -41,7 +42,7 @@
                     <codemirror
                       v-model="htmlEditor.code"
                       :options="htmlEditor.editorOption"
-                      @input="yourCodeChangeMethod">
+                      @input="changeMethod">
                     </codemirror>
                 </div>
             </el-col>
@@ -51,7 +52,7 @@
                     <codemirror
                       v-model="cssEditor.code"
                       :options="cssEditor.editorOption"
-                      @input="yourCodeChangeMethod">
+                      @input="changeMethod">
                     </codemirror>
                 </div>
             </el-col>
@@ -63,7 +64,7 @@
                     <codemirror
                       v-model="jsEditor.code"
                       :options="jsEditor.editorOption"
-                      @input="yourCodeChangeMethod">
+                      @input="changeMethod">
                     </codemirror>
                 </div>
             </el-col>
@@ -71,32 +72,7 @@
                 <div class="result-box" ref="resultBox">
                     <div class="tips">效果展示</div>
                     <div id="iframe">
-                        <!-- <iframe id='result' ref="result"></iframe> -->
-                        <result>
-                            <template solt="body">
-                                <div v-html="htmlEditor.code"></div>
-                            </template>    
-                            <!-- <template solt="style">
-                                <style v-html="cssEditor.code"></style>
-                            </template>  
-                            <template solt="js">
-                                <script v-html="jsEditor.code"></script>
-                            </template>  -->
-                        </result>
                     </div>
-                    <!-- <result>
-                        <template solt="body">
-                            <div v-html="htmlEditor.code"></div>
-                        </template>    
-                        <template solt="body">
-                            <style v-html="cssEditor.code"></style>
-                        </template>  
-                    </result> -->
-                    <!-- <result>
-                        <body v-html="dom">
-                        
-                        </body>
-                    </result> -->
                 </div>
             </el-col>
         </el-row>
@@ -130,18 +106,15 @@ import 'codemirror/addon/hint/anyword-hint.js'
 // theme css
 import 'codemirror/theme/base16-dark.css'
 import Result from '../common/Result.vue'
+import juicer from'../../../static/juicer.js'
 export default{
     data(){
         return{
-            checkList:["jquery"],
-            htmlCode:'',
-            jsCode:'',
-            cssCode:'',
-            dom:'',
-            iframe:'',
-            htmlEditor:{
-                code:'',
-                editorOption:{
+            checkList:["jquery"], //选择类库
+            name:'', //作品名称
+            htmlEditor:{   //html编辑器
+                code:'', //code
+                editorOption:{ //配置
                     tabSize: 4,
                     mode: 'htmlmixed',
                     lineNumbers: true,
@@ -156,7 +129,7 @@ export default{
                     extraKeys:{"Ctrl-Space":"autocomplete"}//ctrl-space唤起智能提示
                 },
             },
-            cssEditor:{
+            cssEditor:{  //css编辑器
                 code:'',
                 editorOption:{
                     tabSize: 4,
@@ -173,7 +146,7 @@ export default{
                     extraKeys:{"Ctrl-Space":"autocomplete"}//ctrl-space唤起智能提示
                 },
             },
-            jsEditor:{
+            jsEditor:{  //js编辑器
                 code:'',
                 editorOption:{
                     tabSize: 4,
@@ -190,86 +163,224 @@ export default{
                     extraKeys:{"Ctrl-Space":"autocomplete"}//ctrl-space唤起智能提示
                 },
             },
-            
+            //模板
+            temp:['<html>'+
+                    '<head>' +
+                        '<meta charset="utf-8">' +
+                        '<meta name="viewport" content="width=device-width,initial-scale=1.0">' +
+                        '<title>爱奇艺学习平台</title>' +
+                        '<style> ${style}' +
+                        '</style>' +
+                    '</head>' +
+                    '<body> ${jsLib} ${html}' +
+                    '<script> ${js}</'+'script>'+
+                    '</body>' +
+                    '</html>'].join(""),
+            jsLib:'', //js类库
+            id: ''  //作品id
+        }
+    },
+    created(){
+        let _this = this;
+        var query = this.$route.query;
+        if(query.id){
+            this.id = query.id;
+            this.getRunCodeData(query.id);
         }
     },
     methods:{
-        yourCodeChangeMethod($val){
-            console.log(111);
+        changeMethod($val){
+            // var _this = this;
+            // if(_this.flag){
+            //     setTimeout(function(){
+            //         _this.run();
+            //         _this.flag = true;
+            //     },2000)
+            // }
+            // _this.flag = false;
+        },
+        //获取类库
+        fetchLib(){
+            this.jsLib = "";
+            for(var i = 0; i < this.checkList.length; i++){
+                if(this.checkList[i] == "jquery"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></'+'script>';
+                }else if( this.checkList[i] == "underscore"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"></'+'script>';
+                }else if( this.checkList[i] == "backbone"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/backbone.js/1.3.3/backbone-min.js"></'+'script>';
+                }else if( this.checkList[i] == "d3"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></'+'script>';
+                }else if( this.checkList[i] == "sea1.2"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/seajs/1.2.0/sea.js"></'+'script>';
+                }else if( this.checkList[i] == "vue1.0"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue/1.0.28/vue.min.js"></'+'script>';
+                }else if( this.checkList[i] == "vue-router"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/vue-router/3.0.1/vue-router.min.js"></'+'script>';
+                }else if( this.checkList[i] == "bootstraps"){
+                    this.jsLib += '<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/js/bootstrap.js"></'+'script>';
+                }
+            }
         },
         run(){
-            // console.log(typeof this.jsEditor.code);
-            // var dom = "<style>" + this.cssEditor.code + '</style>' +"<script>"+ this.jsEditor.code +"</"+"script>"+ this.htmlEditor.code;
-            // console.log(dom);
-            // var render = this.$template.compile(tpl);
-            // var renderHtml = render({ html: this.htmlEditor.code, js: this.jsEditor.code, css: this.cssEditor.code});
-            // var iframe = document.getElementById('iframe');
-            // console.log(iframe);
-            // iframe.innerHTML = '<iframe id="result" class="" sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin" style="height: 300px"></iframe>';
-            // var result = document.getElementById('result');
-            // result.contentWindow.document.open('text/html', 'replace');
-            // result.contentWindow.document.write(renderHtml);
-            // result.contentWindow.document.close();
+            this.fetchLib();
+            var data = {
+                style: this.cssEditor.code,
+                html: this.htmlEditor.code,
+                js: this.jsEditor.code,
+                jsLib: this.jsLib
+            }
+            var html = juicer(this.temp,data);
+            var iframe = document.getElementById('iframe');
+            iframe.innerHTML = '<iframe id="result" class="" sandbox="allow-modals allow-forms allow-popups allow-scripts allow-same-origin" style="height: 300px;width:680px;border:0"></iframe>';
+            var result = document.getElementById('result');
+            result.contentWindow.document.open('text/html', 'replace');
+            result.contentWindow.document.write(html);
+            result.contentWindow.document.close();
         },
-        change(){
-            console.log(this.checkList);
+        save(){
+            var _this = this;
+            if(this.name){
+                if(!_this.id){
+                    var date = new Date();
+                    var Y = date.getFullYear() + '-';
+                    var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+                    var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate()) + ' ';
+                    var h = (date.getHours()<10 ? '0'+date.getHours() : date.getHours()) + ':';
+                    var m = (date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes());
+                    var createDate = Y+M+D+h+m;
+                    var params = {
+                        html: _this.htmlEditor.code,
+                        css: _this.cssEditor.code,
+                        js: _this.jsEditor.code,
+                        libs: _this.checkList.join(','),
+                        name: _this.name,
+                        owner: 1,
+                        createdate: createDate
+                    }
+                    this.$axios({
+                        url:"http://localhost:3000/setRunCode",
+                        method: 'POST',
+                        data:_this.$qs.stringify(params),
+                    }).then(function(data){
+                        if(data.data.code == 200){
+                            _this.$message({
+                                message: '恭喜你，保存作品成功!',
+                                type: 'success'
+                            });
+                            setTimeout(function(){
+                                _this.$router.push({
+                                    path: '/runCode',
+                                    query: {
+                                        id: data.data.data.id
+                                    }
+                                })
+                            },2000);
+                        }else{
+                            _this.$message.error(data.data.data.msg);
+                        }
+                    });
+                }else{
+                    var params = {
+                        html: _this.htmlEditor.code,
+                        css: _this.cssEditor.code,
+                        js: _this.jsEditor.code,
+                        libs: _this.checkList.join(','),
+                        name: _this.name,
+                        id: _this.id
+
+                    }
+                    this.$axios({
+                        url:"http://localhost:3000/updateRunCode",
+                        method: 'POST',
+                        data:_this.$qs.stringify(params),
+                    }).then(function(data){
+                        if(data.data.code == 200){
+                            _this.$message({
+                                message: '恭喜你，更新作品成功!',
+                                type: 'success'
+                            });
+                        }else{
+                            _this.$message.error(data.data.data.msg);
+                        }
+                    });
+                }
+            }else{
+                _this.$message.error("请输入RunCode标题!");
+            }
+           
+            
+        },
+        getRunCodeData(id){
+            var _this = this;
+            this.$axios.get('http://localhost:3000/getRunCode?id='+id).then(function(data){
+                if(data.data.code == 200){
+                    data = data.data.data[0];
+                    _this.htmlEditor.code = data.html;
+                    _this.cssEditor.code = data.css;
+                    _this.jsEditor.code = data.js;
+                    _this.checkList = data.libs.split(",");
+                    _this.name = data.name;
+                    _this.run();
+                }else{
+                    _this.$message.error(data.data.data.msg);
+                }
+            })
         }
     },
     components: {
         codemirror,
-        Result
     },
-    mounted(){
-        this.iframe = this.$refs.result;
-        console.log(this.iframe);
-    }
+    // mounted(){
+    //     this.iframe = this.$refs.result;
+    // }
 }
 </script>
 <style scoped>
-#contain{
-    width: 1400px;
-}
-.el-row{
-    margin-top: 20px;
-}
-.title{
-    height: 40px;
-    line-height: 40px;
-    text-align: center;
-    font-weight: bold;
-}
-.head-title{
-    background-color: #5cb85c;
-    height: 40px;
-    text-align: center;
-    line-height: 40px;
-    color: #ffffff;
-}
-.el-button--success{
-    width: 150px;
-}
-.el-checkbox-group{
-    height: 40PX;
-    line-height: 40px;
-    
-}
-.html-box,.css-box,.js-box,.result-box{
-    height: 400px;
-    border: 1px solid black;
-    overflow:auto;
-}
-.tips{
-    height: 30px;
-    background-color: #5cb85c;
-    color: #ffffff;
-    font-weight: bold;
-    font-size: 20px;
-    line-height: 30px;
-    text-indent: 20px;
-}
-.vue-codemirror {
-    width: 96%;
-    height: 90%;
-}
+    #contain{
+        width: 1400px;
+    }
+    .el-row{
+        margin-top: 20px;
+    }
+    .title{
+        height: 40px;
+        line-height: 40px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .head-title{
+        background-color: #5cb85c;
+        height: 40px;
+        text-align: center;
+        line-height: 40px;
+        color: #ffffff;
+    }
+    .el-button--success{
+        width: 150px;
+    }
+    .el-checkbox-group{
+        height: 40PX;
+        line-height: 40px;
+        
+    }
+    .html-box,.css-box,.js-box,.result-box{
+        height: 400px;
+        border: 1px solid black;
+        overflow:auto;
+    }
+    .tips{
+        height: 30px;
+        background-color: #5cb85c;
+        color: #ffffff;
+        font-weight: bold;
+        font-size: 20px;
+        line-height: 30px;
+        text-indent: 20px;
+    }
+    .vue-codemirror {
+        width: 96%;
+        height: 90%;
+    }
 
 </style>

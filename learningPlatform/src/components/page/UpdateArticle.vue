@@ -74,7 +74,6 @@ export default{
     created(){
         let _this = this;
         var query = this.$route.query;
-        console.log(query);
         if(query.id){
             this.id = query.id;
             this.getArticleData(query.id);
@@ -83,8 +82,8 @@ export default{
     mounted(){
         let _this = this;
         _this.editor = UE.getEditor('editor',{ 
-        BaseUrl: '', 
-        UEDITOR_HOME_URL: 'static/utf8-jsp/',
+            BaseUrl: '', 
+            UEDITOR_HOME_URL: 'static/utf8-jsp/',
         });
         _this.editor.addListener("ready", function () {
             _this.editor.setContent(_this.editordata); // 确保UE加载完成后，放入内容。
@@ -119,74 +118,78 @@ export default{
         this.inputValue = '';
       },
       save() {
-        var tag = this.dynamicTags.join(",");
-        var date = new Date();
-        var Y = date.getFullYear() + '-';
-        var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
-        var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate()) + ' ';
-        var h = (date.getHours()<10 ? '0'+date.getHours() : date.getHours()) + ':';
-        var m = (date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes());
-        var createDate = Y+M+D+h+m;
-        console.log(createDate);
-        var params = {
-            user:'nie',
-            title: this.title,
-            content: this.editor.getContent(),
-            tag: tag,
-            authority: this.authority,
-            createDate: createDate
-        }
-        console.log(params);
-        if(this.id){
-            params.id = this.id;
-            params.lastModifyUser = "li";
-            var _this = this;
-            this.$axios({
-                url:"http://localhost:3000/updateArticle",
-                method: 'POST',
-                data:this.$qs.stringify(params),
-            }).then(function(data){
-                if(data.data.code == 200){
-                    _this.$message({
-                        message: '恭喜你，更新文章成功!',
-                        type: 'success'
-                    });
-                    setTimeout(function(){
-                        _this.$router.push({
-                            path: '/detail',
-                            query: {
-                                id: _this.id
-                            }
-                        })
-                    },2000);
-                }else{
-                    _this.$message.error(data.data.data.msg);
-                }
-            });
+        if(this.title == ""){
+            _this.$message.error("请输入文章标题!");
+        }else if(this.editor.getContent() == ""){
+            _this.$message.error("请输入文章内容!");
         }else{
-            var _this = this;
-            this.$axios({
-                url:"http://localhost:3000/setArticle",
-                method: 'POST',
-                data:this.$qs.stringify(params),
-            }).then(function(data){
-                if(data.data.code == 200){
-                    _this.$message({
-                        message: '恭喜你，保存文章成功!',
-                        type: 'success'
-                    });
-                    setTimeout(function(){
-                        _this.$router.push({
-                            path: '/detail',
-                            query: {
-                                id: data.data.data.id
-                            }
-                        })
-                    },2000);
-                }else{
-                    _this.$message.error(data.data.data.msg);
-                }
-            });
+            var tag = this.dynamicTags.join(",");
+            var date = new Date();
+            var Y = date.getFullYear() + '-';
+            var M = (date.getMonth()+1 < 10 ? '0'+(date.getMonth()+1) : date.getMonth()+1) + '-';
+            var D = (date.getDate() < 10 ? '0'+date.getDate() : date.getDate()) + ' ';
+            var h = (date.getHours()<10 ? '0'+date.getHours() : date.getHours()) + ':';
+            var m = (date.getMinutes() < 10 ? '0'+date.getMinutes() : date.getMinutes());
+            var createDate = Y+M+D+h+m;
+            var params = {
+                user:'nie',
+                title: this.title,
+                content: this.editor.getContent(),
+                tag: tag,
+                authority: this.authority,
+                createDate: createDate
+            }
+            if(this.id){
+                params.id = this.id;
+                params.lastModifyUser = "li";
+                var _this = this;
+                this.$axios({
+                    url:"http://localhost:3000/updateArticle",
+                    method: 'POST',
+                    data:this.$qs.stringify(params),
+                }).then(function(data){
+                    if(data.data.code == 200){
+                        _this.$message({
+                            message: '恭喜你，更新文章成功!',
+                            type: 'success'
+                        });
+                        setTimeout(function(){
+                            _this.$router.push({
+                                path: '/detail',
+                                query: {
+                                    id: _this.id
+                                }
+                            })
+                        },2000);
+                    }else{
+                        _this.$message.error(data.data.data.msg);
+                    }
+                });
+            }else{
+                var _this = this;
+                this.$axios({
+                    url:"http://localhost:3000/setArticle",
+                    method: 'POST',
+                    data:this.$qs.stringify(params),
+                }).then(function(data){
+                    if(data.data.code == 200){
+                        _this.$message({
+                            message: '恭喜你，保存文章成功!',
+                            type: 'success'
+                        });
+                        setTimeout(function(){
+                            _this.$router.push({
+                                path: '/detail',
+                                query: {
+                                    id: data.data.data.id
+                                }
+                            })
+                        },2000);
+                    }else{
+                        _this.$message.error(data.data.data.msg);
+                    }
+                });
+            }
         }
       },
       getArticleData(id){
